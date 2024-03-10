@@ -1,64 +1,91 @@
 ﻿using labs;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection.Emit;
 
 class Program
 {
     static void Main()
-    {
-        var test = 5 * 5;
+    {        
+        int testsCount = 8;
+        int count = 5;
+        List<List<int>> list = new List<List<int>>();
+        Stopwatch stopWatch = new Stopwatch();
+        Generator generator = new Generator(2000);
 
-        Generator generator = new Generator(100);
+        for (int i = 0; i < testsCount; i++)
+        {
+            list.Add(new List<int>());
+        }
 
-        generator.CreateTransposeMatrix(generator.MatrixB,"B");
+        for (int i = 0; i < count; i++)
+        {
+            generator.CreateTransposeMatrix(generator.MatrixB, "B");
+            stopWatch.Start();
+            CalculateMatrixMultiplication(200, "matrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
+            //Console.WriteLine("Время выполнения row by column: " + stopWatch.Elapsed.Milliseconds);
+            list[0].Add(stopWatch.Elapsed.Milliseconds);
+            stopWatch.Reset();
 
-        var timeStar = DateTime.Now;
-        CalculateMatrixMultiplication(100, "matrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
-        var timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения row by column: " + (timeEnd - timeStar).Ticks);
+            stopWatch.Start();
+            generator.CreateTransposeMatrix(generator.TransposedMatrix, "T");
+            CalculateMatrixMultiplication(200, "matrixA.bin", "transposedMatrixT.bin", "resultRowColumn.bin");
+            // Console.WriteLine("Время выполнения row by column(T): " + stopWatch.Elapsed.Milliseconds);
+            list[1].Add(stopWatch.Elapsed.Milliseconds);
+            stopWatch.Reset();
 
-        timeStar = DateTime.Now;
-        generator.CreateTransposeMatrix(generator.TransposedMatrix, "T");
-        CalculateMatrixMultiplication(100, "matrixA.bin", "transposedMatrixT.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения row by column(T): " + (timeEnd - timeStar).Ticks);
+            stopWatch.Start();
+            CalculateMatrixMultiplication(200, "matrixA.bin", "matrixB.bin", "resultRowColumn.bin");
+            //Console.WriteLine("Время выполнения row by row: " + stopWatch.Elapsed.Milliseconds);
+            list[2].Add(stopWatch.Elapsed.Milliseconds);
+            stopWatch.Reset();
 
-        timeStar = DateTime.Now;
-        CalculateMatrixMultiplication(100, "matrixA.bin", "matrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения row by row: " + (timeEnd - timeStar).Ticks);
+            stopWatch.Start();
+            generator.CreateTransposeMatrix(generator.MatrixB, "B");
+            CalculateMatrixMultiplication(200, "matrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
+            //Console.WriteLine("Время выполнения row by row(T): " + stopWatch.Elapsed.Milliseconds);
+            list[3].Add(stopWatch.Elapsed.Milliseconds);
+            stopWatch.Reset();
 
-        timeStar = DateTime.Now;
-        generator.CreateTransposeMatrix(generator.MatrixB, "B");
-        CalculateMatrixMultiplication(100, "matrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения row by row(T): " + (timeEnd - timeStar).Ticks);
+            generator.CreateTransposeMatrix(generator.MatrixA, "A");
+            generator.CreateTransposeMatrix(generator.MatrixB, "B");
+            stopWatch.Start();
+            CalculateMatrixMultiplication(200, "transposedMatrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
+            //Console.WriteLine("Время выполнения column by column: " + stopWatch.Elapsed.Milliseconds);
+            list[4].Add(stopWatch.Elapsed.Milliseconds);
+            stopWatch.Reset();
 
-        generator.CreateTransposeMatrix(generator.MatrixA, "A");
-        generator.CreateTransposeMatrix(generator.MatrixB, "B");
-        timeStar = DateTime.Now;
-        CalculateMatrixMultiplication(100, "transposedMatrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения column by column: " + (timeEnd - timeStar).Ticks);
+            stopWatch.Start();
+            generator.CreateTransposeMatrix(generator.TransposedMatrix, "T");
+            CalculateMatrixMultiplication(200, "transposedMatrixA.bin", "transposedMatrixT.bin", "resultRowColumn.bin");
+            //Console.WriteLine("Время выполнения column by column(T): " + stopWatch.Elapsed.Milliseconds);
+            list[5].Add(stopWatch.Elapsed.Milliseconds);
+            stopWatch.Reset();
 
-        timeStar = DateTime.Now;
-        generator.CreateTransposeMatrix(generator.TransposedMatrix, "T");
-        CalculateMatrixMultiplication(100, "transposedMatrixA.bin", "transposedMatrixT.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения column by column(T): " + (timeEnd - timeStar).Ticks);
+            stopWatch.Start();
+            CalculateMatrixMultiplication(200, "transposedMatrixA.bin", "matrixB.bin", "resultRowColumn.bin");
+            //Console.WriteLine("Время выполнения column by row: " + stopWatch.Elapsed.Milliseconds);
+            list[6].Add(stopWatch.Elapsed.Milliseconds);
+            stopWatch.Reset();
 
+            stopWatch.Start();
+            generator.CreateTransposeMatrix(generator.MatrixB, "B");
+            CalculateMatrixMultiplication(200, "transposedMatrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
+            //Console.WriteLine("Время выполнения column by row(T): " + stopWatch.Elapsed.Milliseconds);
+            list[7].Add(stopWatch.Elapsed.Milliseconds);
+            stopWatch.Reset();
+        }
 
-        timeStar = DateTime.Now;
-        CalculateMatrixMultiplication(100, "transposedMatrixA.bin", "matrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения column by row: " + (timeEnd - timeStar).Ticks);
+        Console.WriteLine("Среднее время выполнения row by column: " + list[0].Average());
+        Console.WriteLine("Среднее время выполнения row by column(T): " + list[1].Average());
+        Console.WriteLine("Среднее время выполнения row by row: " + list[2].Average());
+        Console.WriteLine("Среднее время выполнения row by row(T): " + list[3].Average());
+        Console.WriteLine("Среднее время выполнения column by column: " + list[4].Average());
+        Console.WriteLine("Среднее время выполнения column by column(T): " + list[5].Average());
+        Console.WriteLine("Среднее время выполнения column by row: " + list[6].Average());
+        Console.WriteLine("Среднее время выполнения column by row(T): " + list[7].Average());
 
-        timeStar = DateTime.Now;
-        generator.CreateTransposeMatrix(generator.MatrixB, "B");
-        CalculateMatrixMultiplication(100, "transposedMatrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения column by row(T): " + (timeEnd - timeStar).Ticks);
     }
 
     static void CalculateMatrixMultiplication(int matrixLength, string matrixAFilePath, string matrixBFilePath, string resultFilePath)
