@@ -111,10 +111,18 @@ class Program
             Console.WriteLine("Epsilon: " + i.ToString("F10"));
             for (int j = 1; j <= maxThreads; j++)
             {
-                Stopwatch sw = Stopwatch.StartNew();
-                double result = ParallelIntegration(a, b, i, j);
-                sw.Stop();
-                Console.WriteLine($"Threads: {j}, Result: {result}, Time: {sw.ElapsedTicks} ticks");
+                long sum = 0;
+                double result = 0;
+                for (var k = 0; k < 10; k ++)
+                {
+                    Stopwatch sw = Stopwatch.StartNew();
+                    result = ParallelIntegration(a, b, i, j);
+
+                    sw.Stop();
+                    sum += sw.ElapsedTicks;
+                }
+                
+                Console.WriteLine($"Threads: {j}, Result: {result}, Time: {sum/10} ticks");
             }
             Console.WriteLine();
         }
