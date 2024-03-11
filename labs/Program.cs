@@ -102,7 +102,7 @@ class Program
             Stopwatch sw = Stopwatch.StartNew();
             double result = SequentialIntegration(a, b, epsilon);
             sw.Stop();
-            Console.WriteLine($"Epsilon: {i.ToString("F10")}, Result: {result}, Time: {sw.ElapsedTicks} ticks");
+            Console.WriteLine($"Epsilon: {i.ToString("F10")}, Result: {result}, Time: {sw.ElapsedMilliseconds} ms");
         }
 
         Console.WriteLine("\nParallel Integration:");
@@ -119,10 +119,10 @@ class Program
                     result = ParallelIntegration(a, b, i, j);
 
                     sw.Stop();
-                    sum += sw.ElapsedTicks;
+                    sum += sw.ElapsedMilliseconds;
                 }
                 
-                Console.WriteLine($"Threads: {j}, Result: {result}, Time: {sum/10} ticks");
+                Console.WriteLine($"Threads: {j}, Result: {result}, Time: {sum/10} ms");
             }
             Console.WriteLine();
         }
