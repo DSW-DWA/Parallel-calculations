@@ -1,102 +1,120 @@
-﻿using labs;
-using System;
-using System.IO;
-using System.Reflection.Emit;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 class Program
 {
-    static void Main()
+    static double Function(double x)
     {
-        var test = 5 * 5;
-
-        Generator generator = new Generator(100);
-
-        generator.CreateTransposeMatrix(generator.MatrixB,"B");
-
-        var timeStar = DateTime.Now;
-        CalculateMatrixMultiplication(100, "matrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
-        var timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения row by column: " + (timeEnd - timeStar).Ticks);
-
-        timeStar = DateTime.Now;
-        generator.CreateTransposeMatrix(generator.TransposedMatrix, "T");
-        CalculateMatrixMultiplication(100, "matrixA.bin", "transposedMatrixT.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения row by column(T): " + (timeEnd - timeStar).Ticks);
-
-        timeStar = DateTime.Now;
-        CalculateMatrixMultiplication(100, "matrixA.bin", "matrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения row by row: " + (timeEnd - timeStar).Ticks);
-
-        timeStar = DateTime.Now;
-        generator.CreateTransposeMatrix(generator.MatrixB, "B");
-        CalculateMatrixMultiplication(100, "matrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения row by row(T): " + (timeEnd - timeStar).Ticks);
-
-        generator.CreateTransposeMatrix(generator.MatrixA, "A");
-        generator.CreateTransposeMatrix(generator.MatrixB, "B");
-        timeStar = DateTime.Now;
-        CalculateMatrixMultiplication(100, "transposedMatrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения column by column: " + (timeEnd - timeStar).Ticks);
-
-        timeStar = DateTime.Now;
-        generator.CreateTransposeMatrix(generator.TransposedMatrix, "T");
-        CalculateMatrixMultiplication(100, "transposedMatrixA.bin", "transposedMatrixT.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения column by column(T): " + (timeEnd - timeStar).Ticks);
-
-
-        timeStar = DateTime.Now;
-        CalculateMatrixMultiplication(100, "transposedMatrixA.bin", "matrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения column by row: " + (timeEnd - timeStar).Ticks);
-
-        timeStar = DateTime.Now;
-        generator.CreateTransposeMatrix(generator.MatrixB, "B");
-        CalculateMatrixMultiplication(100, "transposedMatrixA.bin", "transposedMatrixB.bin", "resultRowColumn.bin");
-        timeEnd = DateTime.Now;
-        Console.WriteLine("Время выполнения column by row(T): " + (timeEnd - timeStar).Ticks);
+        return 8 + 2*x - (x*x);
     }
 
-    static void CalculateMatrixMultiplication(int matrixLength, string matrixAFilePath, string matrixBFilePath, string resultFilePath)
+    static double SequentialIntegration(double a, double b, double epsilon)
     {
-        int N = matrixLength;
+        double result = 0;
+        double h = (b - a) / 2;
+        double prevResult = double.MaxValue;
+        /*int n = 1;*/
 
-        using (BinaryReader matrixAReader = new BinaryReader(File.Open(matrixAFilePath, FileMode.Open)))
-        using (BinaryReader matrixBReader = new BinaryReader(File.Open(matrixBFilePath, FileMode.Open)))
-        using (BinaryWriter resultWriter = new BinaryWriter(File.Open(resultFilePath, FileMode.Create)))
+        while (true)
         {
-            for (int i = 0; i < N; i++)
+            double sum = 0;
+
+            for (double i = a; i <= b; i+=h)
             {
-                for (int j = 0; j < N; j++)
-                {
-                    int sum = 0;
-                    matrixAReader.BaseStream.Seek(i * N * sizeof(int), SeekOrigin.Begin);
-                    matrixBReader.BaseStream.Seek(j * sizeof(int), SeekOrigin.Begin);
-                    for (int k = 0; k < N; k++)
-                    {
-                        int a = matrixAReader.ReadInt32();
-                        int b = matrixBReader.ReadInt32();
-                        sum += a * b;
-                    }
-                    resultWriter.Write(sum);
-                }
+                sum += Function(i)*h;
             }
-        }
-    }
-    static void PrintMatrix(int[,] matrix)
-    {
-        int rows = matrix.GetLength(0);
-        int cols = matrix.GetLength(1);
 
-        for (int i = 0; i < rows; i++)
+            double currentResult = sum;
+
+            if (Math.Abs(currentResult - prevResult) < epsilon)
+                break;
+
+            prevResult = currentResult;
+            /*n *= 2;*/
+            h /= 2;
+        }
+
+        result = prevResult;
+
+        return result;
+    }
+
+    static double ParallelIntegration(double a, double b, double epsilon, int numThreads)
+    {
+        double result = 0;
+        double subStep = (b - a) / numThreads;
+        double prevResult = double.MaxValue;
+        var step = subStep / 2;
+
+        while (true)
         {
-            for (int j = 0; j < cols; j++)
+            result = 0;
+            var listThread = new List<Thread>();
+            for (var i = 0; i < numThreads; i++)
             {
-                Console.Write(matrix[i, j] + " ");
+                var threadA = a + i * subStep;
+                var threadB = a + (i + 1) * subStep;
+
+                var th = new Thread(() =>
+                {
+                    double threadResult = 0;
+                    for (var x = threadA; x < threadB; x += step)
+                    {
+                        threadResult += Function(x) * step;
+                    }
+
+                    result += threadResult;
+                });
+
+                th.Start();
+
+                listThread.Add(th);
+            }
+
+            foreach (var th in listThread)
+                th.Join();
+
+            if (Math.Abs(result - prevResult) < epsilon)
+                break;
+
+            prevResult = result;
+            step /= 2;
+        }
+        
+
+        return result;
+    }
+
+
+    static void Main(string[] args)
+    {
+        var t = 5 * 5;
+        double a = -2;
+        double b = 4;
+        double epsilon = 0.000000001;
+        double starEpsilon = 0.001;
+        int maxThreads = 8;
+
+        Console.WriteLine("Sequential Integration:");
+        for (double i = starEpsilon; i >= epsilon; i /=10)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            double result = SequentialIntegration(a, b, epsilon);
+            sw.Stop();
+            Console.WriteLine($"Epsilon: {i.ToString("F10")}, Result: {result}, Time: {sw.ElapsedTicks} ticks");
+        }
+
+        Console.WriteLine("\nParallel Integration:");
+        for (double i = starEpsilon; i >= epsilon; i /=10)
+        {
+            Console.WriteLine("Epsilon: " + i.ToString("F10"));
+            for (int j = 1; j <= maxThreads; j++)
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                double result = ParallelIntegration(a, b, i, j);
+                sw.Stop();
+                Console.WriteLine($"Threads: {j}, Result: {result}, Time: {sw.ElapsedTicks} ticks");
             }
             Console.WriteLine();
         }
