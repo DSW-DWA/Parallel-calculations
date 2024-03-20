@@ -38,52 +38,6 @@ class Program
         return result;
     }
 
-    /*static double ParallelIntegration(double a, double b, double epsilon, int numThreads)
-    {
-        double result = 0;
-        double subStep = (b - a) / numThreads;
-        double prevResult = double.MaxValue;
-        var step = subStep / 2;
-        while (true)
-        {
-            result = 0;
-            var listThread = new List<Thread>();
-            for (var i = 0; i < numThreads; i++)
-            {
-                var threadA = a + i * subStep;
-                var threadB = a + (i + 1) * subStep;
-                var th = new Thread(() =>
-                {
-                    var t = 5 * 5;
-                    double threadResult = 0;
-                    for (var x = threadA; x < threadB; x += step)
-                    {
-                        threadResult += Function(x) * step;
-                    }
-
-                    result += threadResult;
-                });
-
-                listThread.Add(th);
-            }
-            foreach (var th in listThread)
-            {
-                th.Start();
-                th.Join();
-            } 
-                
-            if (Math.Abs(result - prevResult) < epsilon)
-                break;
-
-
-            prevResult = result;
-            step /= 2;
-        }
-
-
-        return result;
-    }*/
-
     static double ParallelIntegration(double a, double b, double epsilon, int numThreads)
     {
         double result = 0;
